@@ -1,0 +1,1858 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Aesthetic Nav</title>
+    <link id="favicon" rel="icon" type="image/x-icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌐</text></svg>">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <!-- Replaced Material Icons with Material Symbols as requested -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#007BFF",
+                        "primary-hover": "#0056b3",
+                        "background-light": "#FFFFFF",
+                        "background-dark": "#121212",
+                        "surface-light": "#F3F4F6",
+                        "surface-dark": "#1E1E1E",
+                        "text-main-light": "#111827",
+                        "text-main-dark": "#F3F4F6",
+                        "text-secondary-light": "#6B7280",
+                        "text-secondary-dark": "#9CA3AF",
+                        "border-light": "#E5E7EB",
+                        "border-dark": "#374151",
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Inter', 'sans-serif'],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.5rem",
+                        'xl': '1rem',
+                        '2xl': '1.5rem',
+                        '3xl': '2rem',
+                    },
+                },
+            },
+        };
+    </script>
+    <!-- Compact scrollbar styles -->
+    <style>
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .dark ::-webkit-scrollbar-thumb {
+            background: #475569;
+        }
+
+        .dark ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        /* Modal animation */
+        .modal-overlay {
+            transition: opacity 0.2s ease-out;
+        }
+
+        .modal-content {
+            transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+        }
+
+        .modal-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .modal-overlay.hidden .modal-content {
+            transform: scale(0.95);
+            opacity: 0;
+        }
+
+        /* Card hover animation */
+        .link-card {
+            transition: transform 0.2s ease;
+        }
+
+        .link-card:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Status Dot Animation */
+        @keyframes pulse-dot {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.2);
+                opacity: 0.7;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .status-dot-pulse {
+            animation: pulse-dot 2s infinite;
+        }
+
+        /* Admin Visibility Control */
+        .admin-only {
+            display: none !important;
+        }
+
+        body.is-admin .admin-only {
+            display: flex !important;
+        }
+
+        /* Category drag & drop */
+        .category-section.dragging {
+            opacity: 0.6;
+        }
+
+        .category-section.drop-target {
+            outline: 2px dashed #60a5fa;
+            outline-offset: 6px;
+        }
+
+        .category-drag-handle {
+            cursor: grab;
+        }
+
+        .category-drag-handle:active {
+            cursor: grabbing;
+        }
+
+        /* Link drag & drop */
+        .link-card.dragging {
+            opacity: 0.6;
+        }
+
+        .link-card.drop-target {
+            outline: 2px dashed #60a5fa;
+            outline-offset: 4px;
+        }
+
+        .link-drag-handle {
+            cursor: grab;
+        }
+
+        .link-drag-handle:active {
+            cursor: grabbing;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark text-text-main-light dark:text-text-main-dark font-sans antialiased h-screen flex flex-col overflow-hidden transition-colors duration-200">
+    <!-- Header (Compact h-14) -->
+    <header
+        class="h-14 flex items-center justify-between px-6 border-b border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark z-10 shrink-0">
+        <div class="flex items-center space-x-3">
+            <img id="site-logo" src="" alt="Logo" class="w-8 h-8 rounded-lg object-contain hidden" />
+            <h1 id="site-title" class="text-xl font-bold tracking-tight text-text-main-light dark:text-text-main-dark">
+                Aesthetic Nav</h1>
+        </div>
+        <div class="flex items-center space-x-2">
+            <!-- Search Input (Compact) -->
+            <div class="relative flex items-center space-x-2">
+                <span
+                    class="material-symbols-outlined text-xl text-text-secondary-light dark:text-text-secondary-dark">search</span>
+                <input type="text" id="search-input" data-i18n-placeholder="search_placeholder" placeholder="搜索..."
+                    class="w-48 px-3 py-1.5 rounded-full bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark focus:border-primary focus:outline-none text-xs" />
+            </div>
+            <!-- Login Button -->
+            <!-- Login Button -->
+            <button id="login-btn"
+                class="px-3 py-1.5 rounded-full hover:bg-surface-light dark:hover:bg-surface-dark transition-colors text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark border border-border-light dark:border-border-dark"
+                onclick="toggleLoginModal()" data-i18n="admin_login">
+                管理员登录
+            </button>
+            <button
+                class="p-2 rounded-full hover:bg-surface-light dark:hover:bg-surface-dark transition-colors text-text-secondary-light dark:text-text-secondary-dark hidden">
+                <span class="material-symbols-outlined text-xl">more_vert</span>
+            </button>
+            <!-- Settings Button -->
+            <button onclick="document.querySelector('.nav-item[data-filter=\'settings\']').click()"
+                class="p-2 rounded-full hover:bg-surface-light dark:hover:bg-surface-dark transition-colors text-text-secondary-light dark:text-text-secondary-dark admin-only">
+                <span class="material-symbols-outlined text-xl">settings</span>
+            </button>
+            <!-- Language Toggle -->
+            <button onclick="toggleLanguage()"
+                class="p-2 rounded-full hover:bg-surface-light dark:hover:bg-surface-dark transition-colors text-text-secondary-light dark:text-text-secondary-dark font-medium text-xs w-8 h-8 flex items-center justify-center">
+                <span id="lang-text">ZH</span>
+            </button>
+            <button
+                class="p-2 rounded-full hover:bg-surface-light dark:hover:bg-surface-dark transition-colors text-text-secondary-light dark:text-text-secondary-dark focus:outline-none"
+                id="theme-toggle">
+                <span class="material-symbols-outlined text-xl" id="theme-icon">dark_mode</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden relative">
+        <!-- Sidebar Navigation (Compact w-20, py-4) -->
+        <nav
+            class="hidden md:flex w-20 flex-col items-center py-4 border-r border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark shrink-0 space-y-4">
+            <div class="flex flex-col items-center w-full" id="nav-filters-desktop">
+                <a class="nav-item flex flex-col items-center justify-center w-full py-3 group relative cursor-pointer"
+                    data-filter="all">
+                    <div
+                        class="nav-icon w-10 h-10 flex items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900 text-primary transition-all duration-200 mb-1 shadow-sm group-hover:shadow-md">
+                        <span class="material-symbols-outlined text-xl">grid_view</span>
+                    </div>
+                    <span
+                        class="nav-label text-[11px] font-bold text-primary uppercase tracking-wide text-center leading-tight"
+                        data-i18n="all">All</span>
+                    <div
+                        class="nav-indicator absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-r-full">
+                    </div>
+                </a>
+                <div class="nav-item flex flex-col items-center justify-center w-full py-3 group hover:bg-surface-light dark:hover:bg-surface-dark transition-colors cursor-pointer relative"
+                    data-filter="favorites">
+                    <div
+                        class="nav-icon w-10 h-10 flex items-center justify-center rounded-lg text-text-secondary-light dark:text-text-secondary-dark group-hover:text-primary group-hover:bg-blue-50 dark:group-hover:bg-blue-900/30 transition-all duration-200 mb-1">
+                        <span class="material-symbols-outlined text-xl">star</span>
+                    </div>
+                    <span
+                        class="nav-label text-[11px] font-medium text-text-secondary-light dark:text-text-secondary-dark group-hover:text-primary group-hover:font-semibold uppercase tracking-wide text-center leading-tight transition-colors"
+                        data-i18n="favs">Favs</span>
+                </div>
+                <div class="nav-item flex flex-col items-center justify-center w-full py-3 group hover:bg-surface-light dark:hover:bg-surface-dark transition-colors cursor-pointer relative"
+                    data-filter="recent">
+                    <div
+                        class="nav-icon w-10 h-10 flex items-center justify-center rounded-lg text-text-secondary-light dark:text-text-secondary-dark group-hover:text-primary group-hover:bg-blue-50 dark:group-hover:bg-blue-900/30 transition-all duration-200 mb-1">
+                        <span class="material-symbols-outlined text-xl">history</span>
+                    </div>
+                    <span
+                        class="nav-label text-[11px] font-medium text-text-secondary-light dark:text-text-secondary-dark group-hover:text-primary group-hover:font-semibold uppercase tracking-wide text-center leading-tight transition-colors"
+                        data-i18n="recent">Recent</span>
+                </div>
+                <div class="nav-item flex flex-col items-center justify-center w-full py-3 group hover:bg-surface-light dark:hover:bg-surface-dark transition-colors cursor-pointer relative"
+                    data-filter="settings">
+                    <div
+                        class="nav-icon w-10 h-10 flex items-center justify-center rounded-lg text-text-secondary-light dark:text-text-secondary-dark group-hover:text-primary group-hover:bg-blue-50 dark:group-hover:bg-blue-900/30 transition-all duration-200 mb-1">
+                        <span class="material-symbols-outlined text-xl">settings</span>
+                    </div>
+                    <span
+                        class="nav-label text-[11px] font-medium text-text-secondary-light dark:text-text-secondary-dark group-hover:text-primary group-hover:font-semibold uppercase tracking-wide text-center leading-tight transition-colors"
+                        data-i18n="settings">Settings</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content (p-6) -->
+        <main class="flex-1 overflow-y-auto bg-background-light dark:bg-background-dark p-6 relative pb-24 md:pb-6">
+            <div class="max-w-full mx-auto space-y-8" id="links-container">
+                <!-- Dynamic content will be rendered here -->
+                <div class="flex items-center justify-center h-64">
+                    <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+                </div>
+            </div>
+
+            <!-- FAB - Add Button (Compact w-12 h-12) -->
+            <button id="add-btn"
+                class="fixed bottom-20 md:bottom-8 right-6 md:right-8 w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-lg hover:bg-primary-hover hover:scale-105 transition-all duration-200 group z-20 admin-only">
+                <span class="material-symbols-outlined text-white text-2xl">add</span>
+            </button>
+        </main>
+
+        <!-- Bottom Navigation (Mobile) -->
+        <nav class="md:hidden flex fixed bottom-0 left-0 right-0 h-14 bg-background-light dark:bg-background-dark border-t border-border-light dark:border-border-dark bottom-nav-shadow z-30 justify-around items-center px-2"
+            id="nav-filters-mobile">
+            <a class="nav-item-mobile flex flex-col items-center justify-center w-full h-full text-primary cursor-pointer active-nav"
+                data-filter="all">
+                <span class="material-symbols-outlined text-xl mb-0.5">grid_view</span>
+                <span class="text-[11px] font-bold" data-i18n="all">All</span>
+            </a>
+            <a class="nav-item-mobile flex flex-col items-center justify-center w-full h-full text-text-secondary-light dark:text-text-secondary-dark cursor-pointer"
+                data-filter="favorites">
+                <span class="material-symbols-outlined text-xl mb-0.5">star</span>
+                <span class="text-[11px] font-medium" data-i18n="favs">Favs</span>
+            </a>
+            <a class="nav-item-mobile flex flex-col items-center justify-center w-full h-full text-text-secondary-light dark:text-text-secondary-dark cursor-pointer"
+                data-filter="recent">
+                <span class="material-symbols-outlined text-xl mb-0.5">history</span>
+                <span class="text-[11px] font-medium" data-i18n="recent">Recent</span>
+            </a>
+            <a class="nav-item-mobile flex flex-col items-center justify-center w-full h-full text-text-secondary-light dark:text-text-secondary-dark cursor-pointer"
+                data-filter="settings">
+                <span class="material-symbols-outlined text-xl mb-0.5">settings</span>
+                <span class="text-[11px] font-medium" data-i18n="settings">Settings</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Add Link Modal (retained functionality) -->
+    <div id="add-modal" class="modal-overlay hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div
+            class="modal-content bg-background-light dark:bg-surface-dark rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-bold text-text-main-light dark:text-text-main-dark" data-i18n="add_link_title">
+                    添加新链接</h2>
+                <button id="close-modal"
+                    class="p-2 rounded-full hover:bg-surface-light dark:hover:bg-background-dark transition-colors">
+                    <span
+                        class="material-symbols-outlined text-text-secondary-light dark:text-text-secondary-dark">close</span>
+                </button>
+            </div>
+            <form id="add-form" class="space-y-4">
+                <div>
+                    <label
+                        class="block text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark mb-1"
+                        data-i18n="name_label">名称
+                        *</label>
+                    <input type="text" name="title" required
+                        class="w-full px-4 py-3 rounded-2xl bg-surface-light dark:bg-background-dark border border-border-light dark:border-border-dark focus:border-primary focus:outline-none transition-colors"
+                        data-i18n-placeholder="name_placeholder" placeholder="例如：GitHub" />
+                </div>
+                <div>
+                    <label
+                        class="block text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark mb-1"
+                        data-i18n="url_label">链接
+                        *</label>
+                    <input type="url" name="url" required
+                        class="w-full px-4 py-3 rounded-2xl bg-surface-light dark:bg-background-dark border border-border-light dark:border-border-dark focus:border-primary focus:outline-none transition-colors"
+                        data-i18n-placeholder="url_placeholder" placeholder="https://github.com" />
+                </div>
+                <div>
+                    <label
+                        class="block text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark mb-1"
+                        data-i18n="icon_label">图标
+                        URL (可选)</label>
+                    <input type="url" name="icon_url"
+                        class="w-full px-4 py-3 rounded-2xl bg-surface-light dark:bg-background-dark border border-border-light dark:border-border-dark focus:border-primary focus:outline-none transition-colors"
+                        data-i18n-placeholder="icon_placeholder" placeholder="https://example.com/icon.png" />
+                    <p class="text-xs text-text-secondary-light dark:text-text-secondary-dark mt-1"
+                        data-i18n="icon_hint">留空则自动抓取网站图标</p>
+                </div>
+                <div>
+                    <label
+                        class="block text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark mb-1"
+                        data-i18n="desc_label">备注</label>
+                    <textarea name="description"
+                        class="w-full px-4 py-3 rounded-2xl bg-surface-light dark:bg-background-dark border border-border-light dark:border-border-dark focus:border-primary focus:outline-none transition-colors resize-none h-20"
+                        data-i18n-placeholder="desc_placeholder" placeholder="例如：代码托管平台，开发者社区"></textarea>
+                </div>
+                <div class="relative" id="category-custom-select">
+                    <label
+                        class="block text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark mb-1"
+                        data-i18n="cat_label">分类</label>
+
+                    <!-- Selected Value Display -->
+                    <div id="category-dropdown-trigger"
+                        class="w-full px-4 py-3 rounded-2xl bg-surface-light dark:bg-background-dark border border-border-light dark:border-border-dark focus-within:border-primary transition-all duration-300 cursor-pointer flex items-center justify-between group">
+                        <span id="category-selected-text"
+                            class="text-text-main-light dark:text-text-main-dark font-medium"
+                            data-i18n="cat_placeholder">选择或输入新分类</span>
+                        <span
+                            class="material-symbols-outlined text-text-secondary-light group-hover:text-primary transition-colors duration-300">expand_more</span>
+                    </div>
+
+                    <!-- Floating Dropdown Menu -->
+                    <div id="category-dropdown-menu"
+                        class="absolute left-0 right-0 mt-2 p-2 bg-white/95 dark:bg-surface-dark/95 backdrop-blur-md rounded-2xl shadow-2xl border border-white/20 dark:border-gray-800 z-[60] hidden opacity-0 translate-y-[-10px] transition-all duration-300">
+                        <div id="category-options-container"
+                            class="max-h-60 overflow-y-auto custom-scrollbar space-y-1">
+                            <!-- Options filled by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Hidden Input for Form -->
+                    <input type="hidden" name="category" id="category-hidden-input" />
+
+                    <!-- Custom Input for "New Category" -->
+                    <div id="category-custom-input-wrap" class="mt-2 hidden">
+                        <input type="text" id="category-custom" placeholder="输入新分类名称"
+                            class="w-full px-4 py-3 rounded-2xl bg-surface-light dark:bg-background-dark border border-border-light dark:border-border-dark focus:border-primary focus:outline-none transition-colors"
+                            data-i18n-placeholder="cat_custom_placeholder" />
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <input type="checkbox" name="is_favorite" id="is-favorite"
+                        class="w-5 h-5 rounded border-border-light dark:border-border-dark text-primary focus:ring-primary" />
+                    <label for="is-favorite" class="text-sm text-text-secondary-light dark:text-text-secondary-dark"
+                        data-i18n="add_to_fav">添加到收藏</label>
+                </div>
+                <div class="pt-4">
+                    <button type="submit"
+                        class="w-full py-3 px-4 bg-primary hover:bg-primary-hover text-white font-semibold rounded-2xl transition-colors"
+                        data-i18n="add_btn">
+                        添加链接
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="login-modal"
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center opacity-0 transition-opacity duration-300">
+        <div
+            class="bg-surface-light dark:bg-background-dark rounded-2xl w-full max-w-sm p-8 shadow-2xl transform scale-90 transition-transform duration-300 relative">
+            <button onclick="toggleLoginModal()"
+                class="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                <span
+                    class="material-symbols-outlined text-text-secondary-light dark:text-text-secondary-dark">close</span>
+            </button>
+            <h2 class="text-2xl font-bold mb-6 text-text-main-light dark:text-text-main-dark text-center"
+                data-i18n="login_title">管理员登录</h2>
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <div class="mb-6">
+                    <label
+                        class="block text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark mb-2"
+                        data-i18n="password_label">密码</label>
+                    <input type="password" id="login-password" required
+                        class="w-full px-4 py-3 rounded-xl bg-background-light dark:bg-surface-dark border border-border-light dark:border-border-dark focus:border-primary focus:outline-none transition-colors"
+                        data-i18n-placeholder="password_placeholder" placeholder="请输入管理员密码" />
+                </div>
+                <button type="submit"
+                    class="w-full py-3 px-4 bg-primary hover:bg-primary-hover text-white font-semibold rounded-xl transition-colors shadow-lg shadow-primary/30"
+                    data-i18n="login_btn">
+                    登录系统
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Settings Modal Removed -->
+
+    <script>
+        // ==================== State ====================
+        let allLinks = [];
+        let categories = [];
+        let currentFilter = 'all';
+        let searchQuery = '';
+
+        // ==================== Icon Mappings ====================
+        // Minimal map for special customizations only
+        // Most icons now fetched from Simple Icons CDN (3000+ brands)
+        const iconMap = {
+            'default': { bg: 'bg-gradient-to-br from-blue-500 to-purple-600', html: '' }
+        };
+
+        // ==================== i18n Logic ====================
+        const translations = {
+            'zh': {
+                'search_placeholder': '搜索...',
+                'admin_login': '管理员登录',
+                'logout': '退出登录',
+                'settings': '设置',
+                'site_info': '站点信息',
+                'site_title_label': '网站标题',
+                'logo_url_label': 'Logo URL',
+                'category_visibility': '分组可见性',
+                'visibility_hint': '取消勾选以对普通访客隐藏该分组 (管理员可见)',
+                'save_settings': '保存设置',
+                'login_title': '管理员登录',
+                'password_label': '密码',
+                'password_placeholder': '请输入管理员密码',
+                'login_btn': '登录系统',
+                'add_link_title': '添加新链接',
+                'name_label': '名称 *',
+                'name_placeholder': '例如：GitHub',
+                'url_label': '链接 *',
+                'url_placeholder': 'https://github.com',
+                'icon_label': '图标 URL (可选)',
+                'icon_placeholder': 'https://example.com/icon.png',
+                'items_count': '{count} 项',
+                'icon_hint': '留空则自动抓取网站图标',
+                'desc_label': '备注',
+                'desc_placeholder': '例如：代码托管平台，开发者社区',
+                'cat_label': '分类',
+                'cat_placeholder': '选择或输入新分类',
+                'add_to_fav': '添加到收藏',
+                'add_btn': '添加链接',
+                'edit_btn': '保存修改',
+                'edit_link_title': '编辑链接',
+                'all': '全部',
+                'favs': '收藏',
+                'recent': '最近',
+                'delete_confirm': '确定要删除这个链接吗？',
+                'logout_confirm': '确定要退出登录吗？',
+                'settings_saved': '设置已保存',
+                'save_failed': '保存失败',
+                'login_failed': '登录请求失败',
+                'password_wrong': '密码错误',
+                'unauthorized': '请先登录管理员账号',
+                'security_settings': '安全设置',
+                'change_password': '修改密码',
+                'old_password': '当前密码',
+                'new_password': '新密码',
+                'confirm_password': '确认新密码',
+                'password_mismatch': '两次输入的密码不一致',
+                'password_changed': '密码修改成功，请重新登录',
+                'change_btn': '修改密码',
+                'add_custom_cat': '自定义分类',
+                'cat_custom_placeholder': '输入新分类名称'
+            },
+            'en': {
+                'search_placeholder': 'Search...',
+                'admin_login': 'Admin Login',
+                'logout': 'Logout',
+                'settings': 'Settings',
+                'site_info': 'Site Info',
+                'site_title_label': 'Site Title',
+                'logo_url_label': 'Logo URL',
+                'category_visibility': 'Category Visibility',
+                'visibility_hint': 'Uncheck to hide from visitors (Admin visible)',
+                'save_settings': 'Save Settings',
+                'login_title': 'Admin Login',
+                'password_label': 'Password',
+                'password_placeholder': 'Enter admin password',
+                'login_btn': 'Login',
+                'add_link_title': 'Add New Link',
+                'name_label': 'Name *',
+                'name_placeholder': 'e.g. GitHub',
+                'url_label': 'URL *',
+                'url_placeholder': 'https://github.com',
+                'icon_label': 'Icon URL (Optional)',
+                'icon_placeholder': 'https://example.com/icon.png',
+                'items_count': '{count} Items',
+                'icon_hint': 'Leave empty to auto-fetch',
+                'desc_label': 'Description',
+                'desc_placeholder': 'e.g. Code hosting platform',
+                'cat_label': 'Category',
+                'cat_placeholder': 'Select or type category',
+                'add_to_fav': 'Add to Favorites',
+                'add_btn': 'Add Link',
+                'edit_btn': 'Save Changes',
+                'edit_link_title': 'Edit Link',
+                'all': 'All',
+                'favs': 'Favs',
+                'recent': 'Recent',
+                'delete_confirm': 'Are you sure you want to delete this link?',
+                'logout_confirm': 'Are you sure you want to logout?',
+                'settings_saved': 'Settings saved',
+                'save_failed': 'Save failed',
+                'login_failed': 'Login failed',
+                'password_wrong': 'Incorrect password',
+                'unauthorized': 'Please login as admin first',
+                'security_settings': 'Security Settings',
+                'change_password': 'Change Password',
+                'old_password': 'Current Password',
+                'new_password': 'New Password',
+                'confirm_password': 'Confirm New Password',
+                'password_mismatch': 'Passwords do not match',
+                'password_changed': 'Password changed. Please login again',
+                'change_btn': 'Change Password',
+                'add_custom_cat': 'Custom Category',
+                'cat_custom_placeholder': 'Enter new category name'
+            }
+        };
+
+        let currentLang = localStorage.getItem('lang') || 'zh';
+
+        function t(key) {
+            return translations[currentLang][key] || key;
+        }
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            localStorage.setItem('lang', currentLang);
+            updateLanguageUI();
+        }
+
+        function updateLanguageUI() {
+            // Update lang button text
+            document.getElementById('lang-text').textContent = currentLang.toUpperCase();
+
+            // Update all elements with data-i18n
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                el.textContent = t(el.dataset.i18n);
+            });
+
+            // Update placeholders
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                el.placeholder = t(el.dataset.i18nPlaceholder);
+            });
+
+            // Update dynamic parts (Login Button)
+            updateAuthUI();
+        }
+
+        // ==================== Icon Helper Functions ====================
+        function slugify(text) {
+            // Convert to lowercase and remove all non-letter characters
+            // This matches Simple Icons' slug format
+            return text.toLowerCase().replace(/[^a-z]/g, '');
+        }
+
+        // ==================== Authentication ====================
+        function toggleLoginModal() {
+            const modal = document.getElementById('login-modal');
+            const content = modal.querySelector('div');
+
+            if (modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+                // Small delay to allow display:block to apply before opacity transition
+                setTimeout(() => {
+                    modal.classList.remove('opacity-0');
+                    content.classList.remove('scale-90');
+                    content.classList.add('scale-100');
+                }, 10);
+                document.getElementById('login-password').focus();
+            } else {
+                modal.classList.add('opacity-0');
+                content.classList.remove('scale-100');
+                content.classList.add('scale-90');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 300);
+            }
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            const password = document.getElementById('login-password').value;
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('auth_token', data.access_token);
+                    toggleLoginModal();
+                    updateAuthUI();
+                    document.getElementById('login-form').reset();
+                    // Show success message (optional)
+                } else {
+                    const result = await response.json();
+                    alert(t('password_wrong') + (result.detail ? ': ' + result.detail : ''));
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                alert(t('login_failed'));
+            }
+        }
+
+        function logout() {
+            if (confirm(t('logout_confirm'))) {
+                localStorage.removeItem('auth_token');
+                updateAuthUI();
+            }
+        }
+
+        function isAuthenticated() {
+            const token = localStorage.getItem('auth_token');
+            if (!token) return false;
+
+            // Simple JWT expiry check
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                if (payload.exp * 1000 < Date.now()) {
+                    localStorage.removeItem('auth_token');
+                    return false;
+                }
+                return true;
+            } catch {
+                localStorage.removeItem('auth_token');
+                return false;
+            }
+        }
+
+        function updateAuthUI() {
+            const isAuth = isAuthenticated();
+            const loginBtn = document.getElementById('login-btn'); // Assuming there's a login button in the UI
+
+            if (isAuth) {
+                loginBtn.textContent = t('logout');
+                loginBtn.onclick = logout;
+                loginBtn.classList.add('text-red-500', 'border-red-200', 'hover:bg-red-50', 'dark:text-red-400', 'dark:border-red-900', 'dark:hover:bg-red-900/20');
+                document.body.classList.add('is-admin');
+            } else {
+                loginBtn.textContent = t('admin_login');
+                loginBtn.onclick = toggleLoginModal;
+                loginBtn.classList.remove('text-red-500', 'border-red-200', 'hover:bg-red-50', 'dark:text-red-400', 'dark:border-red-900', 'dark:hover:bg-red-900/20');
+                document.body.classList.remove('is-admin');
+            }
+
+            // Re-render cards to show/hide edit buttons
+            renderLinks();
+        }
+
+        function getAuthHeaders() {
+            const token = localStorage.getItem('auth_token');
+            return token ? { 'Authorization': `Bearer ${token}` } : {};
+        }
+
+        // ==================== Settings Logic ====================
+        let currentSettings = {
+            site_title: "JinResearch",
+            site_logo: "",
+            hidden_categories: [],
+            category_order: []
+        };
+
+        function applySettings(settings) {
+            document.title = settings.site_title;
+
+            const titleEl = document.getElementById('site-title') || document.querySelector('header h1');
+            if (titleEl) titleEl.textContent = settings.site_title;
+
+            const logoEl = document.getElementById('site-logo');
+            if (logoEl) {
+                if (settings.site_logo && settings.site_logo.trim() !== '') {
+                    logoEl.src = settings.site_logo;
+                    logoEl.classList.remove('hidden');
+                } else {
+                    logoEl.classList.add('hidden');
+                }
+            }
+
+            // Update favicon
+            const faviconEl = document.getElementById('favicon');
+            if (faviconEl && settings.site_logo && settings.site_logo.trim() !== '') {
+                faviconEl.href = settings.site_logo;
+            }
+        }
+
+        async function loadSettings() {
+            try {
+                const response = await fetch('/api/settings');
+                currentSettings = await response.json();
+                applySettings(currentSettings);
+            } catch (e) {
+                console.error("Init settings error", e);
+            }
+        }
+
+        // ==================== API Functions ====================
+        async function fetchLinks() {
+            const response = await fetch('/api/links', {
+                headers: {
+                    ...getAuthHeaders()
+                }
+            });
+            return response.json();
+        }
+
+        async function fetchCategories() {
+            const response = await fetch('/api/categories');
+            return response.json();
+        }
+
+        async function persistCategoryOrder(order) {
+            if (!isAuthenticated()) return;
+            try {
+                const response = await fetch('/api/categories/order', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...getAuthHeaders()
+                    },
+                    body: JSON.stringify({ order })
+                });
+
+                if (!response.ok) throw new Error('Save failed');
+                currentSettings.category_order = [...order];
+            } catch (error) {
+                console.error(error);
+                alert(t('save_failed'));
+            }
+        }
+
+        async function createLink(data) {
+            const response = await fetch('/api/links', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeaders()
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (response.status === 401 || response.status === 403) {
+                toggleLoginModal();
+                throw new Error('Unauthorized');
+            }
+            return response.json();
+        }
+
+        async function updateLink(id, data) {
+            const response = await fetch(`/api/links/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeaders()
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (response.status === 401 || response.status === 403) {
+                alert('请先登录管理员账号');
+                toggleLoginModal();
+                throw new Error('Unauthorized');
+            }
+            return response.json();
+        }
+
+        async function toggleFavorite(id, isFavorite) {
+            await updateLink(id, { is_favorite: isFavorite });
+        }
+
+        async function trackClick(id) {
+            await fetch(`/api/links/${id}/click`, { method: 'POST' });
+        }
+
+        async function deleteLink(id) {
+            await fetch(`/api/links/${id}`, {
+                method: 'DELETE',
+                headers: getAuthHeaders()
+            });
+        }
+
+        // ==================== Availability Check ====================
+        async function checkLinkAvailability(url) {
+            try {
+                // Use a simple HEAD request with timeout
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+
+                const response = await fetch(url, {
+                    method: 'HEAD',
+                    mode: 'no-cors', // Allows checking even with CORS restrictions
+                    signal: controller.signal
+                });
+                clearTimeout(timeout);
+                return 'available'; // Successfully fetched
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    return 'timeout';
+                }
+                return 'unavailable';
+            }
+        }
+
+        function updateAvailabilityIndicator(container, status) {
+            const dot = container.querySelector('.status-dot');
+            if (!dot) return;
+
+            dot.classList.remove('status-pending', 'status-available', 'status-unavailable', 'status-timeout');
+            dot.classList.remove('bg-gray-300', 'dark:bg-gray-600', 'bg-green-500', 'bg-red-500', 'bg-yellow-500');
+
+            if (status === 'available') {
+                dot.classList.add('status-available', 'bg-green-500');
+            } else if (status === 'timeout') {
+                dot.classList.add('status-timeout', 'bg-yellow-500');
+            } else {
+                dot.classList.add('status-unavailable', 'bg-red-500');
+            }
+        }
+
+        async function checkAllStatuses() {
+            const containers = document.querySelectorAll('.status-dot-container');
+            containers.forEach(async (container) => {
+                const url = container.dataset.url;
+                if (!url) return;
+
+                const status = await checkLinkAvailability(url);
+                updateAvailabilityIndicator(container, status);
+            });
+        }
+
+        // ==================== Render Functions ====================
+        function getIconHTML(link) {
+            const title = link.title;
+
+            // Layer 0: Custom URL (highest priority)
+            if (link.icon_url) {
+                return `<img src="${link.icon_url}" class="w-10 h-10 rounded-lg shadow-md object-cover" alt="${title}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                        <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white shadow-md" style="display:none;">
+                            <span class="font-bold text-lg">${title.charAt(0).toUpperCase()}</span>
+                        </div>`;
+            }
+
+            // Generate slug for Simple Icons
+            const slug = slugify(link.icon || title);
+
+            // Layer 1: Simple Icons CDN (3000+ brands, well-maintained)
+            const simpleIconsUrl = `https://cdn.simpleicons.org/${slug}`;
+
+            // Layer 2: Google Favicon API (fallback for non-brand sites)
+            let googleFaviconUrl = '';
+            try {
+                const domain = new URL(link.url).hostname;
+                googleFaviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+            } catch (e) {
+                // Invalid URL, Simple Icons will fallback to first letter directly
+            }
+
+            // Layer 3: First letter fallback
+            const fallbackHTML = `<div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white shadow-md">
+                                    <span class="font-bold text-lg">${title.charAt(0).toUpperCase()}</span>
+                                </div>`;
+
+            // Build with cascading onerror
+            if (googleFaviconUrl) {
+                // Try Simple Icons → Google Favicon → First Letter
+                return `<img src="${simpleIconsUrl}" class="w-10 h-10 rounded-lg shadow-md object-cover bg-white dark:bg-gray-800 p-2" alt="${title}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+                        <img src="${googleFaviconUrl}" class="w-10 h-10 rounded-lg shadow-md object-cover bg-white dark:bg-gray-800 p-1" alt="${title}" style="display:none;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                        <div style="display:none;">${fallbackHTML}</div>`;
+            } else {
+                // Try Simple Icons → First Letter
+                return `<img src="${simpleIconsUrl}" class="w-10 h-10 rounded-lg shadow-md object-cover bg-white dark:bg-gray-800 p-2" alt="${title}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                        <div style="display:none;">${fallbackHTML}</div>`;
+            }
+        }
+
+        function renderCard(link) {
+            const description = link.description || '';
+
+            return `
+                <div class="flex flex-col group cursor-pointer text-center link-card relative" data-id="${link.id}" data-url="${link.url}" data-category="${link.category}">
+                    <div class="w-full h-20 bg-surface-light dark:bg-surface-dark rounded-xl flex items-center justify-center mb-2 group-hover:shadow-sm dark:group-hover:shadow-none group-hover:bg-gray-100 dark:group-hover:bg-[#2A2A2A] transition-all duration-300 relative overflow-hidden">
+                        
+                        <!-- Drag Handle: Flush with top center edge -->
+                        <div class="admin-only absolute top-0 left-0 right-0 flex justify-center z-30 pointer-events-none">
+                            <div class="link-drag-handle px-3 py-0.5 text-text-secondary-light/30 dark:text-text-secondary-dark/30 group-hover:text-text-secondary-light dark:group-hover:text-text-secondary-dark hover:text-primary transition-all cursor-grab active:cursor-grabbing pointer-events-auto"
+                                data-id="${link.id}" title="拖动排序" draggable="true">
+                                <span class="material-symbols-outlined text-sm leading-none" style="font-size: 14px;">drag_handle</span>
+                            </div>
+                        </div>
+                        <!-- Fav/Delete Buttons -->
+                         <button class="favorite-btn absolute top-2 left-2 p-1 rounded-full bg-white/80 dark:bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white dark:hover:bg-black z-20" data-id="${link.id}" data-favorite="${link.is_favorite}">
+                            <span class="material-symbols-outlined text-sm ${link.is_favorite ? 'text-yellow-500' : 'text-gray-400'} filled">${link.is_favorite ? 'star' : 'star'}</span>
+                        </button>
+                        <button class="delete-btn admin-only absolute bottom-2 left-2 p-1 rounded-full bg-white/80 dark:bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-100 dark:hover:bg-red-900 z-20" data-id="${link.id}">
+                            <span class="material-symbols-outlined text-sm text-red-500">delete</span>
+                        </button>
+                        <button class="edit-btn admin-only absolute bottom-2 right-2 p-1 rounded-full bg-white/80 dark:bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-blue-100 dark:group-hover:bg-blue-900 z-20" data-id="${link.id}">
+                            <span class="material-symbols-outlined text-sm text-blue-500">edit</span>
+                        </button>
+
+                        <!-- Status Dot -->
+                        <div class="status-dot-container absolute top-2 right-2 flex items-center justify-center z-10" data-url="${link.url}">
+                             <div class="status-dot w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600 status-pending transition-colors duration-500"></div>
+                        </div>
+
+                        ${getIconHTML(link)}
+                    </div>
+                    <div class="px-1 py-1">
+                        <span class="text-xs font-medium text-text-main-light dark:text-text-main-dark block truncate">${link.title}</span>
+                         ${description ? `<p class="text-[10px] text-text-secondary-light dark:text-text-secondary-dark leading-tight line-clamp-1">${description}</p>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderSection(category, links) {
+            return `
+                <section class="category-section" data-category="${category}">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-2">
+                            <button class="category-drag-handle admin-only p-1.5 rounded-lg hover:bg-surface-light dark:hover:bg-surface-dark text-text-secondary-light dark:text-text-secondary-dark"
+                                title="Drag to reorder" draggable="true" data-category="${category}">
+                                <span class="material-symbols-outlined text-base">drag_indicator</span>
+                            </button>
+                            <h2 class="text-sm font-bold text-text-main-light dark:text-text-main-dark">${category}</h2>
+                        </div>
+                        <span class="text-xs text-text-secondary-light dark:text-text-secondary-dark">${t('items_count').replace('{count}', links.length)}</span>
+                    </div>
+                    <!-- Compact Grid: gap-4, responsive columns -->
+                    <div class="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-4">
+                        ${links.map(renderCard).join('')}
+                    </div>
+                </section>
+            `;
+        }
+
+        function renderLinks() {
+            const container = document.getElementById('links-container');
+
+            if (currentFilter === 'settings') {
+                container.innerHTML = renderSettingsView();
+                bindSettingsEvents();
+                return;
+            }
+
+            let filteredLinks = [...allLinks];
+
+            if (currentFilter === 'favorites') {
+                filteredLinks = filteredLinks.filter(l => l.is_favorite);
+            } else if (currentFilter === 'recent') {
+                filteredLinks = filteredLinks.sort((a, b) => b.usage_count - a.usage_count).slice(0, 12);
+            }
+
+            if (searchQuery) {
+                const query = searchQuery.toLowerCase();
+                filteredLinks = filteredLinks.filter(l =>
+                    l.title.toLowerCase().includes(query) ||
+                    l.category.toLowerCase().includes(query)
+                );
+            }
+
+            if (filteredLinks.length === 0) {
+                container.innerHTML = `
+                    <div class="flex flex-col items-center justify-center h-64 text-text-secondary-light dark:text-text-secondary-dark">
+                        <span class="material-symbols-outlined text-5xl mb-4">search_off</span>
+                        <p class="text-sm">没有找到匹配的链接</p>
+                    </div>
+                `;
+                return;
+            }
+
+            if (currentFilter === 'recent') {
+                container.innerHTML = renderSection('常用链接', filteredLinks);
+            } else {
+                const grouped = filteredLinks.reduce((acc, link) => {
+                    if (!acc[link.category]) acc[link.category] = [];
+                    acc[link.category].push(link);
+                    return acc;
+                }, {});
+
+                Object.keys(grouped).forEach(cat => {
+                    grouped[cat].sort((a, b) => (a.sort_index || 0) - (b.sort_index || 0));
+                });
+
+                const orderedCategories = categories.filter(cat => grouped[cat]);
+                const extraCategories = Object.keys(grouped).filter(cat => !orderedCategories.includes(cat));
+
+                container.innerHTML = [...orderedCategories, ...extraCategories]
+                    .map((cat) => renderSection(cat, grouped[cat]))
+                    .join('');
+            }
+
+            attachCardListeners();
+            checkAllStatuses();
+
+            if (currentFilter === 'all' && isAuthenticated()) {
+                initCategoryDrag();
+                initLinkDrag();
+            }
+        }
+
+        function initCategoryDrag() {
+            const handles = document.querySelectorAll('.category-drag-handle');
+            const sections = document.querySelectorAll('.category-section');
+            if (!handles.length || !sections.length) return;
+
+            let draggingCategory = null;
+
+            handles.forEach(handle => {
+                handle.addEventListener('dragstart', (e) => {
+                    draggingCategory = handle.dataset.category;
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', draggingCategory);
+                    const section = handle.closest('.category-section');
+                    if (section) section.classList.add('dragging');
+                });
+
+                handle.addEventListener('dragend', () => {
+                    const section = handle.closest('.category-section');
+                    if (section) section.classList.remove('dragging');
+                    document.querySelectorAll('.category-section.drop-target').forEach(el => el.classList.remove('drop-target'));
+                    draggingCategory = null;
+                });
+            });
+
+            sections.forEach(section => {
+                section.addEventListener('dragover', (e) => {
+                    if (!draggingCategory) return;
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    section.classList.add('drop-target');
+                });
+
+                section.addEventListener('dragleave', () => {
+                    section.classList.remove('drop-target');
+                });
+
+                section.addEventListener('drop', async (e) => {
+                    e.preventDefault();
+                    section.classList.remove('drop-target');
+
+                    const fromCategory = e.dataTransfer.getData('text/plain') || draggingCategory;
+                    const toCategory = section.dataset.category;
+
+                    if (!fromCategory || !toCategory || fromCategory === toCategory) return;
+
+                    const fromIndex = categories.indexOf(fromCategory);
+                    const toIndex = categories.indexOf(toCategory);
+                    if (fromIndex === -1 || toIndex === -1) return;
+
+                    categories.splice(fromIndex, 1);
+                    const insertIndex = fromIndex < toIndex ? toIndex - 1 : toIndex;
+                    categories.splice(insertIndex, 0, fromCategory);
+
+                    await persistCategoryOrder(categories);
+                    renderLinks();
+                });
+            });
+        }
+
+        function buildGroupedLinksForOrder() {
+            const grouped = {};
+            allLinks.forEach(link => {
+                if (!grouped[link.category]) grouped[link.category] = [];
+                grouped[link.category].push(link);
+            });
+            Object.keys(grouped).forEach(cat => {
+                grouped[cat].sort((a, b) => (a.sort_index || 0) - (b.sort_index || 0));
+            });
+            return grouped;
+        }
+
+        async function persistLinkOrder(grouped) {
+            if (!isAuthenticated()) return;
+            const items = [];
+            Object.keys(grouped).forEach(cat => {
+                grouped[cat].forEach((link, index) => {
+                    items.push({
+                        id: Number(link.id),
+                        category: String(cat),
+                        sort_index: index + 1
+                    });
+                });
+            });
+
+            try {
+                const response = await fetch('/api/links/reorder', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...getAuthHeaders()
+                    },
+                    body: JSON.stringify({ items })
+                });
+
+                if (response.status === 401 || response.status === 403) {
+                    toggleLoginModal();
+                    throw new Error('Unauthorized');
+                }
+                if (!response.ok) {
+                    const errText = await response.text();
+                    throw new Error(`Save failed: ${response.status} ${errText}`);
+                }
+            } catch (error) {
+                console.error('Reorder error:', error);
+                alert(t('save_failed') + (error.message ? ': ' + error.message : ''));
+            }
+        }
+
+        function initLinkDrag() {
+            const handles = document.querySelectorAll('.link-drag-handle');
+            const cards = document.querySelectorAll('.link-card');
+            const sections = document.querySelectorAll('.category-section');
+            if (!handles.length || !cards.length) return;
+
+            let draggingId = null;
+
+            handles.forEach(handle => {
+                handle.addEventListener('dragstart', (e) => {
+                    draggingId = handle.dataset.id;
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', draggingId);
+                    const card = handle.closest('.link-card');
+                    if (card) card.classList.add('dragging');
+                });
+
+                handle.addEventListener('dragend', () => {
+                    const card = handle.closest('.link-card');
+                    if (card) card.classList.remove('dragging');
+                    document.querySelectorAll('.link-card.drop-target').forEach(el => el.classList.remove('drop-target'));
+                    draggingId = null;
+                });
+            });
+
+            cards.forEach(card => {
+                card.addEventListener('dragover', (e) => {
+                    if (!draggingId) return;
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    card.classList.add('drop-target');
+                });
+
+                card.addEventListener('dragleave', () => {
+                    card.classList.remove('drop-target');
+                });
+
+                card.addEventListener('drop', async (e) => {
+                    e.preventDefault();
+                    card.classList.remove('drop-target');
+
+                    const fromId = e.dataTransfer.getData('text/plain') || draggingId;
+                    const toId = card.dataset.id;
+                    if (!fromId || !toId || fromId === toId) return;
+
+                    const fromLink = allLinks.find(l => String(l.id) === String(fromId));
+                    const toLink = allLinks.find(l => String(l.id) === String(toId));
+                    if (!fromLink || !toLink) return;
+
+                    const grouped = buildGroupedLinksForOrder();
+                    const fromList = grouped[fromLink.category] || [];
+                    const toList = grouped[toLink.category] || [];
+
+                    const fromIndex = fromList.findIndex(l => l.id === fromLink.id);
+                    if (fromIndex !== -1) fromList.splice(fromIndex, 1);
+
+                    const insertIndex = toList.findIndex(l => l.id === toLink.id);
+                    if (insertIndex === -1) return;
+
+                    const moved = { ...fromLink, category: toLink.category };
+                    toList.splice(insertIndex, 0, moved);
+
+                    grouped[toLink.category] = toList;
+                    if (fromLink.category !== toLink.category) grouped[fromLink.category] = fromList;
+
+                    // Update allLinks to reflect the changes before persisting
+                    const updatedLinks = [];
+                    Object.keys(grouped).forEach(cat => {
+                        grouped[cat].forEach((link, idx) => {
+                            updatedLinks.push({
+                                ...link,
+                                category: cat,
+                                sort_index: idx + 1
+                            });
+                        });
+                    });
+                    allLinks = updatedLinks;
+
+                    await persistLinkOrder(grouped);
+                    renderLinks();
+                });
+            });
+
+            sections.forEach(section => {
+                section.addEventListener('dragover', (e) => {
+                    if (!draggingId) return;
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                });
+
+                section.addEventListener('drop', async (e) => {
+                    if (!draggingId) return;
+                    if (e.target.closest('.link-card')) return;
+                    e.preventDefault();
+
+                    const fromId = e.dataTransfer.getData('text/plain') || draggingId;
+                    const targetCategory = section.dataset.category;
+                    if (!fromId || !targetCategory) return;
+
+                    const fromLink = allLinks.find(l => String(l.id) === String(fromId));
+                    if (!fromLink) return;
+
+                    const grouped = buildGroupedLinksForOrder();
+                    const fromList = grouped[fromLink.category] || [];
+                    const toList = grouped[targetCategory] || [];
+
+                    const fromIndex = fromList.findIndex(l => l.id === fromLink.id);
+                    if (fromIndex !== -1) fromList.splice(fromIndex, 1);
+
+                    const moved = { ...fromLink, category: targetCategory };
+                    toList.push(moved);
+
+                    grouped[targetCategory] = toList;
+                    if (fromLink.category !== targetCategory) grouped[fromLink.category] = fromList;
+
+                    // Update allLinks to reflect the changes before persisting
+                    const updatedLinks = [];
+                    Object.keys(grouped).forEach(cat => {
+                        grouped[cat].forEach((link, idx) => {
+                            updatedLinks.push({
+                                ...link,
+                                category: cat,
+                                sort_index: idx + 1
+                            });
+                        });
+                    });
+                    allLinks = updatedLinks;
+
+                    await persistLinkOrder(grouped);
+                    renderLinks();
+                });
+            });
+        }
+
+        function attachCardListeners() {
+            document.querySelectorAll('.link-card').forEach(card => {
+                card.addEventListener('click', async (e) => {
+                    if (e.target.closest('.favorite-btn') || e.target.closest('.delete-btn') || e.target.closest('.edit-btn') || e.target.closest('.link-drag-handle')) return;
+                    const id = card.dataset.id;
+                    const url = card.dataset.url;
+                    await trackClick(id);
+                    window.open(url, '_blank');
+                });
+            });
+
+            document.querySelectorAll('.favorite-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const id = btn.dataset.id;
+                    const currentFav = btn.dataset.favorite === 'true';
+                    await toggleFavorite(id, !currentFav);
+                    await loadData();
+                });
+            });
+
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    if (confirm(t('delete_confirm'))) {
+                        await deleteLink(btn.dataset.id);
+                        await loadData();
+                    }
+                });
+            });
+
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    openEditModal(parseInt(btn.dataset.id));
+                });
+            });
+        }
+
+        function renderSettingsView() {
+            if (!isAuthenticated()) {
+                return `
+                    <div class="flex flex-col items-center justify-center h-64 text-text-secondary-light dark:text-text-secondary-dark">
+                        <span class="material-symbols-outlined text-5xl mb-4 text-gray-300 dark:text-gray-600">lock</span>
+                        <p class="text-sm mb-6">${t('unauthorized')}</p>
+                        <button onclick="toggleLoginModal()" class="px-6 py-2.5 bg-primary text-white rounded-xl hover:bg-primary-hover transition-colors shadow-lg shadow-blue-500/30 font-medium">
+                            ${t('admin_login')}
+                        </button>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="w-full anime-fade-in">
+                    <div class="flex items-center justify-between mb-8">
+                        <h2 class="text-2xl font-bold text-text-main-light dark:text-text-main-dark">${t('settings')}</h2>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <!-- Card 1: Site Identity -->
+                        <div class="group bg-surface-light dark:bg-surface-dark rounded-3xl p-8 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-white dark:border-gray-800">
+                            <div class="flex items-center space-x-4 mb-6">
+                                <div class="p-3 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-blue-500">
+                                    <span class="material-symbols-outlined text-3xl">badge</span>
+                                </div>
+                                <h3 class="text-lg font-bold text-text-main-light dark:text-text-main-dark">${t('site_info')}</h3>
+                            </div>
+                            
+                            <div class="space-y-5">
+                                <div>
+                                    <label class="block text-xs font-bold text-text-secondary-light dark:text-text-secondary-dark uppercase tracking-wider mb-2" data-i18n="site_title_label">${t('site_title_label')}</label>
+                                    <input type="text" id="setting-site-title" 
+                                        class="w-full px-4 py-3.5 rounded-xl bg-background-light dark:bg-background-dark border border-transparent focus:border-primary focus:ring-0 transition-all font-medium text-text-main-light dark:text-text-main-dark placeholder-gray-400 dark:placeholder-gray-600">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-text-secondary-light dark:text-text-secondary-dark uppercase tracking-wider mb-2" data-i18n="logo_url_label">${t('logo_url_label')}</label>
+                                    <input type="url" id="setting-site-logo" 
+                                        class="w-full px-4 py-3.5 rounded-xl bg-background-light dark:bg-background-dark border border-transparent focus:border-primary focus:ring-0 transition-all font-medium text-text-main-light dark:text-text-main-dark placeholder-gray-400 dark:placeholder-gray-600">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 2: Visibility -->
+                        <div class="group bg-surface-light dark:bg-surface-dark rounded-3xl p-8 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-white dark:border-gray-800">
+                            <div class="flex items-center justify-between mb-6">
+                                <div class="flex items-center space-x-4">
+                                    <div class="p-3 rounded-2xl bg-purple-50 dark:bg-purple-900/20 text-purple-500">
+                                        <span class="material-symbols-outlined text-3xl">visibility</span>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-lg font-bold text-text-main-light dark:text-text-main-dark">${t('category_visibility')}</h3>
+                                        <p class="text-xs text-text-secondary-light dark:text-text-secondary-dark mt-0.5">${t('visibility_hint')}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="settings-categories-list" class="space-y-2.5 max-h-[280px] overflow-y-auto pr-2 custom-scrollbar">
+                                <div class="flex items-center justify-center p-8">
+                                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 3: Security -->
+                        <div class="group bg-surface-light dark:bg-surface-dark rounded-3xl p-8 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-white dark:border-gray-800">
+                            <div class="flex items-center justify-between mb-6">
+                                <div class="flex items-center space-x-4">
+                                    <div class="p-3 rounded-2xl bg-red-50 dark:bg-red-900/20 text-red-500">
+                                        <span class="material-symbols-outlined text-3xl">lock_reset</span>
+                                    </div>
+                                    <h3 class="text-lg font-bold text-text-main-light dark:text-text-main-dark">${t('security_settings')}</h3>
+                                </div>
+                            </div>
+
+                            <form id="password-form" class="space-y-5">
+                                <div>
+                                    <label class="block text-xs font-bold text-text-secondary-light dark:text-text-secondary-dark uppercase tracking-wider mb-2" data-i18n="old_password">${t('old_password')}</label>
+                                    <input type="password" name="old_password" required
+                                        class="w-full px-4 py-3.5 rounded-xl bg-background-light dark:bg-background-dark border border-transparent focus:border-primary focus:ring-0 transition-all font-medium text-text-main-light dark:text-text-main-dark">
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-bold text-text-secondary-light dark:text-text-secondary-dark uppercase tracking-wider mb-2" data-i18n="new_password">${t('new_password')}</label>
+                                        <input type="password" name="new_password" required minlength="6"
+                                            class="w-full px-4 py-3.5 rounded-xl bg-background-light dark:bg-background-dark border border-transparent focus:border-primary focus:ring-0 transition-all font-medium text-text-main-light dark:text-text-main-dark">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-text-secondary-light dark:text-text-secondary-dark uppercase tracking-wider mb-2" data-i18n="confirm_password">${t('confirm_password')}</label>
+                                        <input type="password" name="confirm_password" required minlength="6"
+                                            class="w-full px-4 py-3.5 rounded-xl bg-background-light dark:bg-background-dark border border-transparent focus:border-primary focus:ring-0 transition-all font-medium text-text-main-light dark:text-text-main-dark">
+                                    </div>
+                                </div>
+                                <div class="pt-2 flex justify-end">
+                                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors font-bold text-sm">
+                                        ${t('change_btn')}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Actions Bar (General Settings) -->
+                        <!-- Actions Bar (General Settings) -->
+                        <div class="flex justify-end pt-4">
+                            <button id="save-settings-btn" type="button" class="px-8 py-3 rounded-xl bg-primary text-white hover:bg-primary-hover shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:scale-105 transition-all duration-200 font-bold tracking-wide flex items-center space-x-2">
+                                <span class="material-symbols-outlined text-xl">save</span>
+                                <span>${t('save_settings')}</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function bindSettingsEvents() {
+            if (!isAuthenticated()) return;
+
+            // Fetch latest settings
+            try {
+                const response = await fetch('/api/settings');
+                if (response.ok) {
+                    currentSettings = await response.json();
+                }
+            } catch (e) {
+                console.error("Failed to refresh settings", e);
+            }
+
+            // Populate form
+            document.getElementById('setting-site-title').value = currentSettings.site_title;
+            document.getElementById('setting-site-logo').value = currentSettings.site_logo;
+
+            // Fetch categories and populate list
+            const categories = await fetchCategories();
+            const listEl = document.getElementById('settings-categories-list');
+            if (listEl) {
+                listEl.innerHTML = '';
+                categories.forEach(cat => {
+                    const isVisible = !currentSettings.hidden_categories.includes(cat);
+                    const div = document.createElement('div');
+                    div.className = 'flex items-center space-x-3 p-3.5 hover:bg-background-light dark:hover:bg-blue-900/20 rounded-2xl transition-all duration-200 cursor-pointer group';
+                    div.innerHTML = `
+                        <input type="checkbox" id="cat-${cat}" class="w-5 h-5 rounded-md border-2 border-gray-300 dark:border-gray-600 text-primary focus:ring-primary focus:ring-offset-2 transition-colors cursor-pointer" ${isVisible ? 'checked' : ''}>
+                        <label for="cat-${cat}" class="text-sm font-semibold flex-1 cursor-pointer select-none text-text-main-light dark:text-text-main-dark group-hover:text-primary transition-colors">${cat}</label>
+                    `;
+                    listEl.appendChild(div);
+                });
+            }
+
+            // Bind actions
+            const saveBtn = document.getElementById('save-settings-btn');
+            if (saveBtn) saveBtn.addEventListener('click', saveSettings);
+
+            const passForm = document.getElementById('password-form');
+            if (passForm) passForm.addEventListener('submit', changePassword);
+        }
+
+        async function changePassword(e) {
+            e.preventDefault();
+            const form = e.target;
+            const oldPass = form.old_password.value;
+            const newPass = form.new_password.value;
+            const confirmPass = form.confirm_password.value;
+
+            if (newPass !== confirmPass) {
+                alert(t('password_mismatch'));
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/auth/change-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+                    body: JSON.stringify({ old_password: oldPass, new_password: newPass })
+                });
+
+                if (res.ok) {
+                    alert(t('password_changed'));
+                    logout();
+                } else {
+                    const data = await res.json();
+                    alert(data.detail || t('save_failed'));
+                }
+            } catch (err) {
+                console.error(err);
+                alert(t('save_failed'));
+            }
+        }
+
+        async function saveSettings(event) {
+            event.preventDefault();
+            const title = document.getElementById('setting-site-title').value;
+            const logo = document.getElementById('setting-site-logo').value;
+            const hiddenCats = [];
+            document.getElementById('settings-categories-list').querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                if (!checkbox.checked) hiddenCats.push(checkbox.id.replace('cat-', ''));
+            });
+
+            const newSettings = {
+                site_title: title,
+                site_logo: logo,
+                hidden_categories: hiddenCats,
+                category_order: currentSettings.category_order || []
+            };
+
+            try {
+                const response = await fetch('/api/settings', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+                    body: JSON.stringify(newSettings)
+                });
+                if (response.ok) {
+                    currentSettings = await response.json();
+                    applySettings(currentSettings);
+                    alert(t('settings_saved'));
+                    // Don't reload, just stay on page? check user preference.
+                    // User said "content content changes". Probably fine to stay.
+                } else throw new Error('Save failed');
+            } catch (error) {
+                console.error(error);
+                alert(t('save_failed'));
+            }
+        }
+
+        function updateNavActive(filter) {
+            // Update Desktop Nav
+            document.querySelectorAll('.nav-item').forEach(item => {
+                const isActive = item.dataset.filter === filter;
+                const icon = item.querySelector('.nav-icon');
+                const label = item.querySelector('.nav-label');
+                const indicator = item.querySelector('.nav-indicator');
+
+                if (isActive) {
+                    icon.classList.add('bg-blue-100', 'dark:bg-blue-900', 'text-primary');
+                    icon.classList.remove('text-text-secondary-light', 'dark:text-text-secondary-dark');
+                    label.classList.add('font-bold', 'text-primary');
+                    label.classList.remove('font-medium', 'text-text-secondary-light', 'dark:text-text-secondary-dark');
+                    if (!indicator) {
+                        const newIndicator = document.createElement('div');
+                        newIndicator.className = 'nav-indicator absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-r-full';
+                        item.appendChild(newIndicator);
+                    }
+                } else {
+                    icon.classList.remove('bg-blue-100', 'dark:bg-blue-900', 'text-primary');
+                    icon.classList.add('text-text-secondary-light', 'dark:text-text-secondary-dark');
+                    label.classList.remove('font-bold', 'text-primary');
+                    label.classList.add('font-medium', 'text-text-secondary-light', 'dark:text-text-secondary-dark');
+                    if (indicator) indicator.remove();
+                }
+            });
+
+            // Update Mobile Nav
+            document.querySelectorAll('.nav-item-mobile').forEach(item => {
+                const isActive = item.dataset.filter === filter;
+                if (isActive) {
+                    item.classList.add('text-primary');
+                    item.classList.remove('text-text-secondary-light', 'dark:text-text-secondary-dark');
+                    item.querySelector('span:last-child').classList.add('font-bold');
+                    item.querySelector('span:last-child').classList.remove('font-medium');
+                } else {
+                    item.classList.remove('text-primary');
+                    item.classList.add('text-text-secondary-light', 'dark:text-text-secondary-dark');
+                    item.querySelector('span:last-child').classList.remove('font-bold');
+                    item.querySelector('span:last-child').classList.add('font-medium');
+                }
+            });
+        }
+
+        // ==================== Data Loading ====================
+        async function loadData() {
+            allLinks = await fetchLinks();
+            categories = await fetchCategories();
+
+            // Populate category select dropdown
+            populateCategorySelect();
+
+            renderLinks();
+            updateNavActive(currentFilter);
+        }
+
+        function populateCategorySelect() {
+            const container = document.getElementById('category-options-container');
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            // Add existing categories
+            categories.forEach(cat => {
+                const item = document.createElement('div');
+                item.className = 'px-4 py-2.5 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/40 text-text-main-light dark:text-text-main-dark cursor-pointer transition-all duration-200 font-medium text-sm flex items-center justify-between group';
+                item.innerHTML = `
+                    <span>${cat}</span>
+                    <span class="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 transition-opacity">check</span>
+                `;
+                item.onclick = (e) => {
+                    e.stopPropagation();
+                    selectCategory(cat);
+                };
+                container.appendChild(item);
+            });
+
+            // Add "Custom Category" option
+            const customItem = document.createElement('div');
+            customItem.className = 'px-4 py-2.5 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/40 text-primary cursor-pointer transition-all duration-200 font-bold text-sm border-t border-gray-100 dark:border-gray-800 mt-1 pt-3';
+            customItem.innerHTML = `
+                <div class="flex items-center space-x-2">
+                    <span class="material-symbols-outlined text-lg">add_circle</span>
+                    <span>${t('add_custom_cat')}</span>
+                </div>
+            `;
+            customItem.onclick = (e) => {
+                e.stopPropagation();
+                selectCategory('__custom__');
+            };
+            container.appendChild(customItem);
+        }
+
+        function toggleCategoryDropdown(show) {
+            const menu = document.getElementById('category-dropdown-menu');
+            const trigger = document.getElementById('category-dropdown-trigger');
+            if (show === undefined) show = menu.classList.contains('hidden');
+
+            if (show) {
+                menu.classList.remove('hidden');
+                menu.offsetHeight;
+                menu.classList.add('opacity-100', 'translate-y-0');
+                menu.classList.remove('opacity-0', 'translate-y-[-10px]');
+                trigger.classList.add('ring-2', 'ring-primary/20', 'border-primary');
+            } else {
+                menu.classList.add('opacity-0', 'translate-y-[-10px]');
+                menu.classList.remove('opacity-100', 'translate-y-0');
+                trigger.classList.remove('ring-2', 'ring-primary/20', 'border-primary');
+                setTimeout(() => {
+                    if (menu.classList.contains('opacity-0')) menu.classList.add('hidden');
+                }, 300);
+            }
+        }
+
+        function selectCategory(value, isInitial = false) {
+            const selectedText = document.getElementById('category-selected-text');
+            const hiddenInput = document.getElementById('category-hidden-input');
+            const customWrap = document.getElementById('category-custom-input-wrap');
+            const customInput = document.getElementById('category-custom');
+
+            if (value === '__custom__') {
+                selectedText.textContent = t('add_custom_cat');
+                hiddenInput.value = '';
+                customWrap.classList.remove('hidden');
+                if (!isInitial) {
+                    customInput.focus();
+                    toggleCategoryDropdown(false);
+                }
+            } else {
+                selectedText.textContent = value || t('cat_placeholder');
+                hiddenInput.value = value;
+                customWrap.classList.add('hidden');
+                if (!isInitial) toggleCategoryDropdown(false);
+            }
+        }
+
+        // ==================== Modal State ====================
+        let modalMode = 'add'; // 'add' or 'edit'
+        let editingLinkId = null;
+
+        function openAddModal() {
+            modalMode = 'add';
+            editingLinkId = null;
+            const modal = document.getElementById('add-modal');
+            const modalTitle = modal.querySelector('h2');
+            const submitBtn = modal.querySelector('button[type="submit"]');
+            const form = document.getElementById('add-form');
+
+            modalTitle.textContent = t('add_link_title');
+            submitBtn.textContent = t('add_btn');
+            form.reset();
+
+            // Reset custom select
+            selectCategory('', true);
+
+            modal.classList.remove('hidden');
+        }
+
+        function openEditModal(linkId) {
+            modalMode = 'edit';
+            editingLinkId = linkId;
+            const link = allLinks.find(l => l.id === linkId);
+            if (!link) return;
+
+            const modal = document.getElementById('add-modal');
+            const modalTitle = modal.querySelector('h2');
+            const submitBtn = modal.querySelector('button[type="submit"]');
+            const form = document.getElementById('add-form');
+
+            // Update modal title and button
+            modalTitle.textContent = t('edit_link_title');
+            submitBtn.textContent = t('edit_btn');
+
+            // Populate form with existing data
+            form.elements.title.value = link.title;
+            form.elements.url.value = link.url;
+            form.elements.icon_url.value = link.icon_url || '';
+            form.elements.description.value = link.description || '';
+
+            // Set category in custom select
+            if (categories.includes(link.category)) {
+                selectCategory(link.category, true);
+            } else {
+                selectCategory('__custom__', true);
+                document.getElementById('category-custom').value = link.category;
+            }
+
+            form.elements.is_favorite.checked = link.is_favorite;
+
+            modal.classList.remove('hidden');
+        }
+
+        // ==================== Event Handlers ====================
+        function initEventListeners() {
+            // Theme toggle
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const themeIcon = document.getElementById('theme-icon');
+
+            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+                themeIcon.innerText = 'light_mode';
+            }
+
+            themeToggleBtn.addEventListener('click', () => {
+                if (document.documentElement.classList.contains('dark')) {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.theme = 'light';
+                    themeIcon.innerText = 'dark_mode';
+                } else {
+                    document.documentElement.classList.add('dark');
+                    localStorage.theme = 'dark';
+                    themeIcon.innerText = 'light_mode';
+                }
+            });
+
+            // Search functionality verified to work with the new structure
+            const searchInput = document.getElementById('search-input');
+            searchInput.addEventListener('input', (e) => {
+                searchQuery = e.target.value;
+                renderLinks();
+            });
+
+            // Custom Category select handler
+            const categoryTrigger = document.getElementById('category-dropdown-trigger');
+            if (categoryTrigger) {
+                categoryTrigger.onclick = (e) => {
+                    e.stopPropagation();
+                    toggleCategoryDropdown();
+                };
+            }
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', () => toggleCategoryDropdown(false));
+
+            document.querySelectorAll('.nav-item, .nav-item-mobile').forEach(item => {
+                item.addEventListener('click', () => {
+                    const filter = item.dataset.filter;
+
+                    currentFilter = filter;
+                    updateNavActive(filter);
+                    renderLinks();
+                });
+            });
+
+            const modal = document.getElementById('add-modal');
+            const addBtn = document.getElementById('add-btn');
+            const closeModal = document.getElementById('close-modal');
+            const addForm = document.getElementById('add-form');
+
+            addBtn.addEventListener('click', () => openAddModal());
+            closeModal.addEventListener('click', () => modal.classList.add('hidden'));
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.classList.add('hidden');
+            });
+
+            addForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(addForm);
+
+                // Get category value from hidden input and custom input
+                const hiddenInput = document.getElementById('category-hidden-input');
+                const customInput = document.getElementById('category-custom');
+                let categoryValue = hiddenInput.value || 'Uncategorized';
+
+                if (customInput && !customInput.closest('#category-custom-input-wrap').classList.contains('hidden')) {
+                    categoryValue = customInput.value.trim() || 'Uncategorized';
+                }
+
+                const data = {
+                    title: formData.get('title'),
+                    url: formData.get('url'),
+                    icon_url: formData.get('icon_url') || null,
+                    description: formData.get('description'),
+                    category: categoryValue,
+                    is_favorite: formData.get('is_favorite') === 'on'
+                };
+
+                if (modalMode === 'edit' && editingLinkId) {
+                    await updateLink(editingLinkId, data);
+                } else {
+                    await createLink(data);
+                }
+
+                addForm.reset();
+                modal.classList.add('hidden');
+                await loadData();
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initEventListeners();
+            updateLanguageUI(); // Init i18n
+            loadSettings();
+            loadData();
+        });
+    </script>
+</body>
+
+</html>

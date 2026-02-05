@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  aesthetic-nav:
+    build: .
+    container_name: aesthetic-nav
+    restart: always
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./dashboard.db:/app/dashboard.db
+    environment:
+      - SECRET_KEY=your-super-secret-key-here
