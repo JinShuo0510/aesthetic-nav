@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   aesthetic-nav:
-    build: .
+    image: ghcr.io/jinshuo0510/aesthetic-nav:latest
     container_name: aesthetic-nav
     restart: always
     ports:
