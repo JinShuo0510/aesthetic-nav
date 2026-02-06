@@ -497,13 +497,9 @@ async def rename_category(payload: CategoryRenameRequest, username: str = Depend
         raise HTTPException(status_code=400, detail="New category name cannot be empty")
     
     with get_db() as conn:
-        # Check if old category exists
-        cursor = conn.execute("SELECT COUNT(*) FROM links WHERE category = ?", (payload.old_name,))
-        if cursor.fetchone()[0] == 0:
-            raise HTTPException(status_code=404, detail="Category not found")
-        
-        # Update all links in the old category
-        conn.execute("UPDATE links SET category = ? WHERE category = ?", (payload.new_name.strip(), payload.old_name))
+        # Update all links in the old category (no error if category doesn't exist)
+        cursor = conn.execute("UPDATE links SET category = ? WHERE category = ?", (payload.new_name.strip(), payload.old_name))
+        affected_rows = cursor.rowcount
         
         # Update category_order in settings if it exists
         cursor = conn.execute("SELECT value FROM settings WHERE key = 'category_order'")
@@ -518,7 +514,7 @@ async def rename_category(payload: CategoryRenameRequest, username: str = Depend
                 pass
         
         conn.commit()
-        return {"old_name": payload.old_name, "new_name": payload.new_name.strip()}
+        return {"old_name": payload.old_name, "new_name": payload.new_name.strip(), "affected_links": affected_rows}
 
 
 @app.post("/api/links", response_model=LinkResponse)
