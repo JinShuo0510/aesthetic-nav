@@ -26,6 +26,7 @@ wheels/
 # Database
 dashboard.db
 *.sqlite3
+data/
 
 # Environment
 .env

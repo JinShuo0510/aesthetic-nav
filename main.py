@@ -25,7 +25,9 @@ from jose import JWTError, jwt
 
 # --- Configuration ---
 BASE_DIR = Path(__file__).resolve().parent
-DB_PATH = BASE_DIR / "dashboard.db"
+DATA_DIR = Path(os.getenv("DATA_DIR", BASE_DIR))
+DATA_DIR.mkdir(parents=True, exist_ok=True)  # Ensure data directory exists
+DB_PATH = DATA_DIR / "dashboard.db"
 TEMPLATES_DIR = BASE_DIR / "templates"
 
 # Auth Configuration

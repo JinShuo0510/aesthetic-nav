@@ -48,12 +48,24 @@
 1. **环境准备**：
    确保已安装 `docker` 和 `docker-compose`。
 
-2. **启动服务**：
+2. **克隆仓库**：
    ```bash
-   docker-compose up -d --build
+   git clone https://github.com/JinShuo0510/aesthetic-nav.git
+   cd aesthetic-nav
    ```
 
-3. **反向代理配置**：
+3. **启动服务**：
+   ```bash
+   docker-compose up -d
+   ```
+   > 首次启动会自动从 GitHub Container Registry 拉取预构建镜像。
+
+4. **更新服务**（后续代码更新后）：
+   ```bash
+   docker-compose pull && docker-compose up -d
+   ```
+
+5. **反向代理配置**：
    服务默认运行在 `8001` 端口，您可以直接使用 Nginx 等工具进行反代。
 
 ### 本地手动运行
