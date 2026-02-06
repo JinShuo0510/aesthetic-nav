@@ -976,7 +976,9 @@
                                 title="Drag to reorder" draggable="true" data-category="${category}">
                                 <span class="material-symbols-outlined text-base">drag_indicator</span>
                             </button>
-                            <h2 class="text-sm font-bold text-text-main-light dark:text-text-main-dark">${category}</h2>
+                            <h2 class="category-title text-sm font-bold text-text-main-light dark:text-text-main-dark cursor-pointer" 
+                                data-category="${category}" 
+                                title="双击编辑分类名称">${category}</h2>
                         </div>
                         <span class="text-xs text-text-secondary-light dark:text-text-secondary-dark">${t('items_count').replace('{count}', links.length)}</span>
                     </div>
@@ -1050,7 +1052,87 @@
             if (currentFilter === 'all' && isAuthenticated()) {
                 initCategoryDrag();
                 initLinkDrag();
+                initCategoryEdit();
             }
+        }
+
+        function initCategoryEdit() {
+            const categoryTitles = document.querySelectorAll('.category-title');
+
+            categoryTitles.forEach(title => {
+                title.addEventListener('dblclick', async (e) => {
+                    if (!isAuthenticated()) return;
+
+                    const oldName = title.dataset.category;
+                    const currentText = title.textContent;
+
+                    // Create inline input
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.value = currentText;
+                    input.className = 'text-sm font-bold text-text-main-light dark:text-text-main-dark bg-surface-light dark:bg-surface-dark border-2 border-primary rounded px-2 py-1 focus:outline-none';
+                    input.style.width = Math.max(currentText.length * 10, 100) + 'px';
+
+                    // Replace title with input
+                    title.replaceWith(input);
+                    input.focus();
+                    input.select();
+
+                    const saveEdit = async () => {
+                        const newName = input.value.trim();
+
+                        if (!newName || newName === oldName) {
+                            // Restore original title
+                            input.replaceWith(title);
+                            return;
+                        }
+
+                        try {
+                            const response = await fetch('/api/categories/rename', {
+                                method: 'PUT',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    ...getAuthHeaders()
+                                },
+                                body: JSON.stringify({
+                                    old_name: oldName,
+                                    new_name: newName
+                                })
+                            });
+
+                            if (response.status === 401 || response.status === 403) {
+                                toggleLoginModal();
+                                input.replaceWith(title);
+                                return;
+                            }
+
+                            if (!response.ok) {
+                                const error = await response.json();
+                                alert(error.detail || '重命名失败');
+                                input.replaceWith(title);
+                                return;
+                            }
+
+                            // Success - reload data
+                            await loadData();
+                        } catch (error) {
+                            console.error('Rename error:', error);
+                            alert('重命名失败');
+                            input.replaceWith(title);
+                        }
+                    };
+
+                    input.addEventListener('blur', saveEdit);
+                    input.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            saveEdit();
+                        } else if (e.key === 'Escape') {
+                            input.replaceWith(title);
+                        }
+                    });
+                });
+            });
         }
 
         function initCategoryDrag() {

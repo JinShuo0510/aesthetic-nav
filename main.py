@@ -115,6 +115,11 @@ class LinkReorderRequest(BaseModel):
     items: list[LinkReorderItem]
 
 
+class CategoryRenameRequest(BaseModel):
+    old_name: str
+    new_name: str
+
+
 # --- Database Setup ---
 @contextmanager
 def get_db():
@@ -483,6 +488,37 @@ async def update_category_order(payload: CategoryOrderUpdate, username: str = De
         conn.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", ("category_order", json.dumps(payload.order)))
         conn.commit()
         return {"order": payload.order}
+
+
+@app.put("/api/categories/rename")
+async def rename_category(payload: CategoryRenameRequest, username: str = Depends(verify_token)):
+    """Rename a category (requires authentication)."""
+    if not payload.new_name or not payload.new_name.strip():
+        raise HTTPException(status_code=400, detail="New category name cannot be empty")
+    
+    with get_db() as conn:
+        # Check if old category exists
+        cursor = conn.execute("SELECT COUNT(*) FROM links WHERE category = ?", (payload.old_name,))
+        if cursor.fetchone()[0] == 0:
+            raise HTTPException(status_code=404, detail="Category not found")
+        
+        # Update all links in the old category
+        conn.execute("UPDATE links SET category = ? WHERE category = ?", (payload.new_name.strip(), payload.old_name))
+        
+        # Update category_order in settings if it exists
+        cursor = conn.execute("SELECT value FROM settings WHERE key = 'category_order'")
+        row = cursor.fetchone()
+        if row:
+            try:
+                order = json.loads(row[0])
+                if payload.old_name in order:
+                    order = [payload.new_name if cat == payload.old_name else cat for cat in order]
+                    conn.execute("UPDATE settings SET value = ? WHERE key = 'category_order'", (json.dumps(order),))
+            except json.JSONDecodeError:
+                pass
+        
+        conn.commit()
+        return {"old_name": payload.old_name, "new_name": payload.new_name.strip()}
 
 
 @app.post("/api/links", response_model=LinkResponse)
