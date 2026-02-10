@@ -99,6 +99,8 @@ class Settings(BaseModel):
     site_logo: str
     hidden_categories: list[str]
     category_order: list[str] = []
+    icp_filing: Optional[str] = ""
+    police_filing: Optional[str] = ""
 
 
 class CategoryOrderUpdate(BaseModel):
@@ -206,7 +208,9 @@ def init_db():
             "site_title": "Aesthetic Nav",
             "site_logo": "https://www.gstatic.com/images/branding/product/1x/keep_2020q4_48dp.png",  # Default logo
             "hidden_categories": "[]",  # JSON list of hidden categories
-            "category_order": "[]"  # JSON list of category order
+            "category_order": "[]",  # JSON list of category order
+            "icp_filing": "",  # ICP filing number
+            "police_filing": ""  # Police filing number
         }
         
         for key, value in default_settings.items():
@@ -387,7 +391,9 @@ async def get_settings():
             site_title=settings_dict.get("site_title", "JinResearch"),
             site_logo=settings_dict.get("site_logo", ""),
             hidden_categories=json.loads(settings_dict.get("hidden_categories", "[]")),
-            category_order=json.loads(settings_dict.get("category_order", "[]"))
+            category_order=json.loads(settings_dict.get("category_order", "[]")),
+            icp_filing=settings_dict.get("icp_filing", ""),
+            police_filing=settings_dict.get("police_filing", "")
         )
 
 
@@ -399,6 +405,8 @@ async def update_settings(settings: Settings, username: str = Depends(verify_tok
         conn.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", ("site_logo", settings.site_logo))
         conn.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", ("hidden_categories", json.dumps(settings.hidden_categories)))
         conn.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", ("category_order", json.dumps(settings.category_order)))
+        conn.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", ("icp_filing", settings.icp_filing))
+        conn.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", ("police_filing", settings.police_filing))
         conn.commit()
         return settings
 
@@ -666,3 +674,4 @@ async def delete_link(link_id: int, username: str = Depends(verify_token)):
 
 
 # --- Run with: uvicorn main:app --reload ---
+
