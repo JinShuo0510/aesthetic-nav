@@ -22,6 +22,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from jose import JWTError, jwt
+import re
 
 # --- Configuration ---
 BASE_DIR = Path(__file__).resolve().parent
@@ -120,6 +121,10 @@ class LinkReorderRequest(BaseModel):
 class CategoryRenameRequest(BaseModel):
     old_name: str
     new_name: str
+
+
+class MetadataFetchRequest(BaseModel):
+    url: str
 
 
 # --- Database Setup ---
@@ -306,6 +311,7 @@ async def check_status(url: str):
         return {"status": "offline", "error": str(e)}
 
 
+
 # --- Authentication Helpers ---
 def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
     """Verify JWT token and return username if valid."""
@@ -343,6 +349,86 @@ def create_access_token(data: dict):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
+
+# --- Metadata Fetching Endpoint ---
+@app.post("/api/fetch-metadata")
+async def fetch_metadata(payload: MetadataFetchRequest, username: str = Depends(verify_token)):
+    """Fetch metadata (title, description, icon) from a URL."""
+    url = payload.url
+    if not url:
+        raise HTTPException(status_code=400, detail="URL is required")
+    
+    if not url.startswith(('http://', 'https://')):
+        url = 'https://' + url
+
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        }
+        async with httpx.AsyncClient(timeout=10.0, follow_redirects=True, headers=headers) as client:
+            response = await client.get(url)
+            response.raise_for_status()
+            
+            # Simple metadata extraction using regex
+            html = response.text
+            
+            title = ""
+            description = ""
+            icon_url = ""
+            
+            # Extract Title
+            title_match = re.search(r'<title[^>]*>(.*?)</title>', html, re.IGNORECASE | re.DOTALL)
+            if title_match:
+                title = title_match.group(1).strip()
+                
+            # Extract Description
+            desc_match = re.search(r'<meta[^>]*name=["\']description["\'][^>]*content=["\']([^"\']*)["\']', html, re.IGNORECASE)
+            if desc_match:
+                description = desc_match.group(1).strip()
+            else:
+                 # Try property="og:description"
+                og_desc_match = re.search(r'<meta[^>]*property=["\']og:description["\'][^>]*content=["\']([^"\']*)["\']', html, re.IGNORECASE)
+                if og_desc_match:
+                    description = og_desc_match.group(1).strip()
+
+            # Extract Icon
+            # Try link rel="icon" or "shortcut icon"
+            icon_match = re.search(r'<link[^>]*rel=["\'](?:shortcut )?icon["\'][^>]*href=["\']([^"\']*)["\']', html, re.IGNORECASE)
+            if icon_match:
+                icon_href = icon_match.group(1).strip()
+                # Handle relative URLs
+                if icon_href.startswith(('http://', 'https://')):
+                    icon_url = icon_href
+                elif icon_href.startswith('//'):
+                    icon_url = 'https:' + icon_href
+                elif icon_href.startswith('/'):
+                    # Need base URL
+                    base_url = str(response.url).rstrip('/')
+                    # Remove path from base_url to get root
+                    from urllib.parse import urlparse
+                    parsed = urlparse(base_url)
+                    root_url = f"{parsed.scheme}://{parsed.netloc}"
+                    icon_url = root_url + icon_href
+                else:
+                    # Relative to current path
+                    base_url = str(response.url).rstrip('/')
+                    icon_url = f"{base_url}/{icon_href}"
+            
+            # If no description found, truncate title if too long? No, keep it as is.
+            
+            return {
+                "title": title,
+                "description": description,
+                "icon_url": icon_url,
+                "url": str(response.url) # Return the final URL (after redirects)
+            }
+
+    except httpx.RequestError as e:
+         raise HTTPException(status_code=400, detail=f"Failed to fetch URL: {str(e)}")
+    except Exception as e:
+         raise HTTPException(status_code=500, detail=f"Error parsing metadata: {str(e)}")
+
 
 
 # --- Authentication Endpoints ---
@@ -596,9 +682,14 @@ async def update_link(link_id: int, link: LinkUpdate, username: str = Depends(ve
         if link.url is not None:
             updates.append("url = ?")
             params.append(link.url)
-        if link.icon is not None:
+        # Allow explicit None to clear icon field
+        if hasattr(link, 'icon') and link.icon is not None:
             updates.append("icon = ?")
             params.append(link.icon)
+        elif link.icon is None and 'icon' in link.model_dump(exclude_unset=True):
+            # Explicitly set to empty string to clear
+            updates.append("icon = ?")
+            params.append("")
         if link.icon_url is not None:
             updates.append("icon_url = ?")
             params.append(link.icon_url)

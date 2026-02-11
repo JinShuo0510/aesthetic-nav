@@ -345,10 +345,35 @@
                         class="block text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark mb-1"
                         data-i18n="url_label">链接
                         *</label>
-                    <input type="url" name="url" required
-                        class="w-full px-4 py-3 rounded-2xl bg-surface-light dark:bg-background-dark border border-border-light dark:border-border-dark focus:border-primary focus:outline-none transition-colors"
-                        data-i18n-placeholder="url_placeholder" placeholder="https://github.com" />
+                    <div class="flex space-x-2">
+                        <input type="url" name="url" required
+                            class="flex-1 px-4 py-3 rounded-2xl bg-surface-light dark:bg-background-dark border border-border-light dark:border-border-dark focus:border-primary focus:outline-none transition-colors"
+                            data-i18n-placeholder="url_placeholder" placeholder="https://github.com" />
+                        <button type="button" id="fetch-metadata-btn" onclick="fetchMetadata()"
+                            class="px-4 py-3 rounded-2xl bg-surface-light dark:bg-background-dark border border-border-light dark:border-border-dark hover:bg-gray-100 dark:hover:bg-gray-800 text-primary transition-colors flex items-center justify-center"
+                            title="自动抓取网页标题和图标">
+                            <span class="material-symbols-outlined">autorenew</span>
+                        </button>
+                    </div>
                 </div>
+
+                <!-- Icon Preview -->
+                <div id="icon-preview-section" class="hidden">
+                    <label
+                        class="block text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark mb-2">
+                        图标预览
+                    </label>
+                    <div
+                        class="flex items-center space-x-3 p-4 rounded-2xl bg-surface-light dark:bg-background-dark border border-border-light dark:border-border-dark">
+                        <div id="icon-preview-container" class="flex items-center justify-center">
+                            <!-- Icon will be rendered here -->
+                        </div>
+                        <span class="text-xs text-text-secondary-light dark:text-text-secondary-dark">
+                            这是根据当前信息生成的图标预览
+                        </span>
+                    </div>
+                </div>
+
                 <div>
                     <label
                         class="block text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark mb-1"
@@ -520,7 +545,9 @@
                 'password_changed': '密码修改成功，请重新登录',
                 'change_btn': '修改密码',
                 'add_custom_cat': '自定义分类',
-                'cat_custom_placeholder': '输入新分类名称'
+                'cat_custom_placeholder': '输入新分类名称',
+                'fetch_success': '元数据抓取成功',
+                'fetch_failed': '抓取失败，请检查 URL 是否正确'
             },
             'en': {
                 'search_placeholder': 'Search...',
@@ -575,7 +602,9 @@
                 'password_changed': 'Password changed. Please login again',
                 'change_btn': 'Change Password',
                 'add_custom_cat': 'Custom Category',
-                'cat_custom_placeholder': 'Enter new category name'
+                'cat_custom_placeholder': 'Enter new category name',
+                'fetch_success': 'Metadata fetched successfully',
+                'fetch_failed': 'Fetch failed, please check URL'
             }
         };
 
@@ -1895,6 +1924,117 @@
             modal.classList.remove('hidden');
         }
 
+        async function fetchMetadata() {
+            const form = document.getElementById('add-form');
+            const urlInput = form.elements.url;
+            const url = urlInput.value.trim();
+
+            if (!url) {
+                alert(t('url_label'));
+                return;
+            }
+
+            const btn = document.getElementById('fetch-metadata-btn');
+            const originalIcon = btn.innerHTML;
+
+            // Set loading state
+            btn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span>';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('/api/fetch-metadata', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...getAuthHeaders()
+                    },
+                    body: JSON.stringify({ url })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Fetch failed');
+                }
+
+                const data = await response.json();
+                // Auto-fill fields
+                if (data.title) form.elements.title.value = data.title;
+                if (data.description) form.elements.description.value = data.description;
+                // Keep icon_url empty to use original frontend icon strategy
+
+                // Update icon preview
+                updateIconPreview({
+                    title: form.elements.title.value,
+                    url: form.elements.url.value,
+                    icon_url: form.elements.icon_url.value,
+                    icon: null
+                });
+
+            } catch (error) {
+                console.error('Metadata fetch error:', error);
+                alert(t('fetch_failed'));
+            } finally {
+                btn.innerHTML = originalIcon;
+                btn.disabled = false;
+            }
+        }
+
+        function updateIconPreview(link) {
+            const previewSection = document.getElementById('icon-preview-section');
+            const previewContainer = document.getElementById('icon-preview-container');
+
+            if (!link.title || !link.url) {
+                previewSection.classList.add('hidden');
+                return;
+            }
+
+            // Show preview section
+            previewSection.classList.remove('hidden');
+
+            // Use the same getIconHTML logic
+            const title = link.title;
+            let iconHTML = '';
+
+            // Layer 0: Custom URL (highest priority)
+            if (link.icon_url && link.icon_url.trim()) {
+                iconHTML = `<img src="${link.icon_url}" class="w-10 h-10 rounded-lg shadow-md object-cover" alt="${title}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                        <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white shadow-md" style="display:none;">
+                            <span class="font-bold text-lg">${title.charAt(0).toUpperCase()}</span>
+                        </div>`;
+            } else {
+                // Generate slug for Simple Icons
+                const slug = slugify(link.icon || title);
+
+                // Layer 1: Simple Icons CDN
+                const simpleIconsUrl = `https://cdn.simpleicons.org/${slug}`;
+
+                // Layer 2: Google Favicon API
+                let googleFaviconUrl = '';
+                try {
+                    const domain = new URL(link.url).hostname;
+                    googleFaviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+                } catch (e) {
+                    // Invalid URL
+                }
+
+                // Layer 3: First letter fallback
+                const fallbackHTML = `<div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white shadow-md">
+                                        <span class="font-bold text-lg">${title.charAt(0).toUpperCase()}</span>
+                                    </div>`;
+
+                // Build with cascading onerror
+                if (googleFaviconUrl) {
+                    iconHTML = `<img src="${simpleIconsUrl}" class="w-10 h-10 rounded-lg shadow-md object-cover bg-white dark:bg-gray-800 p-2" alt="${title}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+                            <img src="${googleFaviconUrl}" class="w-10 h-10 rounded-lg shadow-md object-cover bg-white dark:bg-gray-800 p-1" alt="${title}" style="display:none;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                            <div style="display:none;">${fallbackHTML}</div>`;
+                } else {
+                    iconHTML = `<img src="${simpleIconsUrl}" class="w-10 h-10 rounded-lg shadow-md object-cover bg-white dark:bg-gray-800 p-2" alt="${title}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                            <div style="display:none;">${fallbackHTML}</div>`;
+                }
+            }
+
+            previewContainer.innerHTML = iconHTML;
+        }
+
         // ==================== Event Handlers ====================
         function initEventListeners() {
             // Theme toggle
@@ -1975,6 +2115,7 @@
                     title: formData.get('title'),
                     url: formData.get('url'),
                     icon_url: formData.get('icon_url') || null,
+                    icon: formData.get('icon_url') ? undefined : null, // Clear icon if no custom icon_url
                     description: formData.get('description'),
                     category: categoryValue,
                     is_favorite: formData.get('is_favorite') === 'on'
